@@ -1746,16 +1746,12 @@ def getClassPath(checkout):
   cp = []
 
   # We use the jar file for core to leverage the MR JAR
-  core_jar_file = None
-  for filename in os.listdir("%s/lucene/core/build/libs" % path):
-    if reCoreJar.match(filename) is not None:
-      core_jar_file = "%s/lucene/core/build/libs/%s" % (path, filename)
-      break
-  if core_jar_file is None:
-    raise RuntimeError("can't find core JAR file in %s" % ("%s/lucene/core/build/libs" % path))
-
+  core_jar_file = '%s/lucene/core/build/libs/lucene-core-11.0.0-SNAPSHOT.jar' % path
   cp.append(core_jar_file)
-  cp.append("%s/lucene/sandbox/build/classes/java/main" % path)
+
+  sandbox_jar_file = '%s/lucene/sandbox/build/libs/lucene-sandbox-11.0.0-SNAPSHOT.jar' % path
+  cp.append(sandbox_jar_file)
+
   cp.append("%s/lucene/misc/build/classes/java/main" % path)
   cp.append("%s/lucene/facet/build/classes/java/main" % path)
   cp.append("%s/lucene/analysis/common/build/classes/java/main" % path)

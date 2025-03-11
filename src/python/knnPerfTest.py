@@ -47,40 +47,40 @@ NOISY = True
 
 # test parameters. This script will run KnnGraphTester on every combination of these parameters
 PARAMS = {
-  # "ndoc": (10_000_000,),
-  #'ndoc': (10000, 100000, 200000, 500000),
-  #'ndoc': (10000, 100000, 200000, 500000),
-  #'ndoc': (2_000_000,),
-  #'ndoc': (1_000_000,),
-  "ndoc": (500_000,),
-  #'ndoc': (50_000,),
-  #'maxConn': (32, 64, 96),
-  "maxConn": (64,),
-  #'maxConn': (32,),
-  #'beamWidthIndex': (250, 500),
-  "beamWidthIndex": (250,),
-  #'beamWidthIndex': (50,),
-  #'fanout': (20, 100, 250)
-  "fanout": (50,),
-  #'quantize': None,
-  #'quantizeBits': (32, 7, 4),
-  "numMergeWorker": (12,),
-  "numMergeThread": (4,),
-  #'numMergeWorker': (1,),
-  #'numMergeThread': (1,),
-  "encoding": ("float32",),
-  # 'metric': ('angular',),  # default is angular (dot_product)
-  # 'metric': ('mip',),
-  #'quantize': (True,),
-  "quantizeBits": (32,),
-  #'fanout': (0,),
-  "topK": (100,),
-  # "bp": ("false", "true"),
-  #'quantizeCompress': (True, False),
-  "quantizeCompress": (True,),
-  "queryStartIndex": (0,),  # seek to this start vector before searching, to sample different vectors
-  # "forceMerge": (True, False),
-  #'niter': (10,),
+    'ndoc': (200_000,),
+    #'ndoc': (10000, 100000, 200000, 500000),
+    #'ndoc': (10000, 100000, 200000, 500000),
+    #'ndoc': (2_000_000,),
+    #'ndoc': (1_000_000,),
+    #'ndoc': (50_000,),
+    #'maxConn': (32, 64, 96),
+    'maxConn': (32, ),
+    #'maxConn': (32,),
+    #'beamWidthIndex': (250, 500),
+    'beamWidthIndex': (200, ),
+    #'beamWidthIndex': (50,),
+    #'fanout': (20, 100, 250)
+    'fanout': (50,),
+    #'quantize': None,
+    #'quantizeBits': (32, 7, 4),
+    # 'numMergeWorker': (12,),
+    # 'numMergeThread': (4,),
+    'numMergeWorker': (1,),
+    'numMergeThread': (1,),
+    'encoding': ('float32',),
+    # 'metric': ('angular',),  # default is angular (dot_product)
+    # 'metric': ('mip',),
+    #'quantize': (True,),
+    # 'quantizeBits': (32,),
+    #'fanout': (0,),
+    'topK': (100,),
+    'bp': ('false',),
+    #'quantizeCompress': (True, False),
+    'quantizeCompress': (False,),
+    'queryStartIndex': (0,),   # seek to this start vector before searching, to sample different vectors
+    'forceMerge': (True,),
+    'niter': (1000,),
+    'seed': (42,),
 }
 
 
@@ -110,23 +110,23 @@ def run_knn_benchmark(checkout, values):
   # dim = 384
   # doc_vectors = '%s/data/enwiki-20120502-lines-1k-minilm.vec' % constants.BASE_DIR
   # query_vectors = '%s/luceneutil/tasks/vector-task-minilm.vec' % constants.BASE_DIR
-  # dim = 300
-  # doc_vectors = '%s/data/enwiki-20120502-lines-1k-300d.vec' % constants.BASE_DIR
-  # query_vectors = '%s/luceneutil/tasks/vector-task-300d.vec' % constants.BASE_DIR
+  dim = 300
+  doc_vectors = "/local/home/kaivalnp/workplace/lucene_bench/util/tasks/enwiki-20120502-lines-1k-300d.vec"
+  query_vectors = "/local/home/kaivalnp/workplace/lucene_bench/util/tasks/vector-task-300d.vec"
 
   # dim = 256
   # doc_vectors = '/d/electronics_asin_emb.bin'
   # query_vectors = '/d/electronics_query_vectors.bin'
 
   # Cohere dataset
-  dim = 768
-  doc_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-docs-{dim}d.vec"
-  query_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-queries-{dim}d.vec"
+  # dim = 768
+  # doc_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-docs-{dim}d.vec"
+  # query_vectors = f"{constants.BASE_DIR}/data/cohere-wikipedia-queries-{dim}d.vec"
   # doc_vectors = f"/lucenedata/enwiki/{'cohere-wikipedia'}-docs-{dim}d.vec"
   # query_vectors = f"/lucenedata/enwiki/{'cohere-wikipedia'}-queries-{dim}d.vec"
   # parentJoin_meta_file = f"{constants.BASE_DIR}/data/{'cohere-wikipedia'}-metadata.csv"
 
-  jfr_output = f"{constants.LOGS_DIR}/knn-perf-test.jfr"
+  jfr_output = f'/local/home/kaivalnp/workplace/lucene_bench/util/logs/knn-perf-test.jfr'
 
   cp = benchUtil.classPathToString(benchUtil.getClassPath(checkout) + (f"{constants.BENCH_BASE_DIR}/build",))
   cmd = constants.JAVA_EXE.split(" ") + [
@@ -183,27 +183,21 @@ def run_knn_benchmark(checkout, values):
 
     args += [a for (k, v) in pv.items() for a in ("-" + k, str(v)) if a]
 
-    this_cmd = (
-      cmd
-      + args
-      + [
-        "-dim",
-        str(dim),
-        "-docs",
-        doc_vectors,
-        "-reindex",
-        "-search-and-stats",
-        query_vectors,
-        "-numIndexThreads",
-        "8",
+    this_cmd = cmd + args + [
+        '-dim', str(dim),
+        '-docs', doc_vectors,
+        '-reindex',
+        '-search', query_vectors,
+        '-numIndexThreads', '1',
+        # '-filterSelectivity', '0.5',
+        # '-prefilter',
         #'-metric', 'mip',
         # '-parentJoin', parentJoin_meta_file,
         # '-numMergeThread', '8', '-numMergeWorker', '8',
-        #'-forceMerge',
+        '-forceMerge',
         #'-stats',
         #'-quiet'
       ]
-    )
     if NOISY:
       print(f"  cmd: {this_cmd}")
     else:

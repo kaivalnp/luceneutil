@@ -79,6 +79,7 @@ import org.apache.lucene.queries.function.valuesource.ConstKnnByteVectorValueSou
 import org.apache.lucene.queries.function.valuesource.ConstKnnFloatValueSource;
 import org.apache.lucene.queries.function.valuesource.FloatKnnVectorFieldSource;
 import org.apache.lucene.queries.function.valuesource.FloatVectorSimilarityFunction;
+import org.apache.lucene.sandbox.codecs.faiss.FaissKnnVectorsFormat;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.ConstantScoreScorer;
@@ -1184,38 +1185,51 @@ public class KnnGraphTester {
   }
 
   static Codec getCodec(int maxConn, int beamWidth, ExecutorService exec, int numMergeWorker, boolean quantize, int quantizeBits, boolean quantizeCompress) {
-    if (exec == null) {
-      return new Lucene101Codec() {
-        @Override
-        public KnnVectorsFormat getKnnVectorsFormatForField(String field) {
-          if (quantize) {
-            if (quantizeBits == 1) {
-              return new HnswBitVectorsFormat(maxConn, beamWidth, numMergeWorker, null);
-            } else {
-              return new Lucene99HnswScalarQuantizedVectorsFormat(maxConn, beamWidth, numMergeWorker, quantizeBits, quantizeCompress, null, null);
-            }
-          } else {
-            return new Lucene99HnswVectorsFormat(maxConn, beamWidth, numMergeWorker, null);
-          }
-        }
-      };
-    } else {
-      return new Lucene101Codec() {
-        @Override
-        public KnnVectorsFormat getKnnVectorsFormatForField(String field) {
-          if (quantize) {
-            if (quantizeBits == 1) {
-              return new HnswBitVectorsFormat(maxConn, beamWidth, numMergeWorker, exec);
-            } else {
-              return new Lucene99HnswScalarQuantizedVectorsFormat(maxConn, beamWidth, numMergeWorker, quantizeBits, quantizeCompress, null, exec);
-            }
-          } else {
-            return new Lucene99HnswVectorsFormat(maxConn, beamWidth, numMergeWorker, exec);
-          }
-        }
-      };
-    }
+    return new Lucene101Codec() {
+      @Override
+      public KnnVectorsFormat getKnnVectorsFormatForField(String field) {
+        return new FaissKnnVectorsFormat(
+            String.format(Locale.ROOT, "IDMap,HNSW%d", maxConn),
+            // efSearch = topK + fanout !!
+            String.format(Locale.ROOT, "efConstruction=%d,efSearch=%d", beamWidth, 150)
+        );
+      }
+    };
   }
+
+//  static Codec getCodec(int maxConn, int beamWidth, ExecutorService exec, int numMergeWorker, boolean quantize, int quantizeBits, boolean quantizeCompress) {
+//    if (exec == null) {
+//      return new Lucene101Codec() {
+//        @Override
+//        public KnnVectorsFormat getKnnVectorsFormatForField(String field) {
+//          if (quantize) {
+//            if (quantizeBits == 1) {
+//              return new HnswBitVectorsFormat(maxConn, beamWidth, numMergeWorker, null);
+//            } else {
+//              return new Lucene99HnswScalarQuantizedVectorsFormat(maxConn, beamWidth, numMergeWorker, quantizeBits, quantizeCompress, null, null);
+//            }
+//          } else {
+//            return new Lucene99HnswVectorsFormat(maxConn, beamWidth, numMergeWorker, null);
+//          }
+//        }
+//      };
+//    } else {
+//      return new Lucene101Codec() {
+//        @Override
+//        public KnnVectorsFormat getKnnVectorsFormatForField(String field) {
+//          if (quantize) {
+//            if (quantizeBits == 1) {
+//              return new HnswBitVectorsFormat(maxConn, beamWidth, numMergeWorker, exec);
+//            } else {
+//              return new Lucene99HnswScalarQuantizedVectorsFormat(maxConn, beamWidth, numMergeWorker, quantizeBits, quantizeCompress, null, exec);
+//            }
+//          } else {
+//            return new Lucene99HnswVectorsFormat(maxConn, beamWidth, numMergeWorker, exec);
+//          }
+//        }
+//      };
+//    }
+//  }
 
   private static void usage() {
     String error =
