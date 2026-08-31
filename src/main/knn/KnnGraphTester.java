@@ -1052,9 +1052,9 @@ public class KnnGraphTester implements FormatterLogger {
   }
 
   // static so we are forced to pass in all things that are volatile wrt indexing (if they change, it requires reindexing)
-  private static String formatExactNNKey(boolean parentJoin, FilterStrategy filterStrategy, Float filterSelectivity,
-                                         Long randomSeed, Path docPath, Path queryVectorsPath, int numDocs, String metric,
-                                         int numQueryVectors, int queryStartIndex, SearchType searchType, int topK, float resultSimilarity) {
+  private static String formatExactNNKey(boolean parentJoin, Float filterSelectivity, Long randomSeed, Path docPath,
+                                         Path queryVectorsPath, int numDocs, String metric, int numQueryVectors,
+                                         int queryStartIndex, SearchType searchType, int topK, float resultSimilarity) {
     List<String> suffix = new ArrayList<>();
     suffix.add(metric);
 
@@ -1074,8 +1074,7 @@ public class KnnGraphTester implements FormatterLogger {
       suffix.add("parentJoin");
     }
 
-    if (filterStrategy == FilterStrategy.INDEX_TIME_FILTER) {
-      suffix.add(filterStrategy.toString());
+    if (filterSelectivity != null) {
       suffix.add(filterSelectivity.toString());
       suffix.add(String.valueOf(randomSeed));
     }
@@ -1756,8 +1755,7 @@ public class KnnGraphTester implements FormatterLogger {
                              Path queryPath, int queryStartIndex,
                              String metric) throws IOException, InterruptedException {
 
-    String exactNNKey = formatExactNNKey(parentJoin,
-                                         filterStrategy, filterSelectivity, randomSeed, docPath, queryPath, numDocs, metric,
+    String exactNNKey = formatExactNNKey(parentJoin, filterSelectivity, randomSeed, docPath, queryPath, numDocs, metric,
                                          numQueryVectors, queryStartIndex, searchType, topK, resultSimilarity);
 
     log("exact nn key = %s\n", exactNNKey);
