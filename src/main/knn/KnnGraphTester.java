@@ -2328,33 +2328,10 @@ public class KnnGraphTester implements FormatterLogger {
                         boolean rerank, int rerankQuantizeBits) {
       KnnVectorsFormat knnVectorsFormat;
       if (quantize) {
-          knnVectorsFormat = switch (quantizeBits) {
-              case 1 -> switch (indexType) {
-                  case FLAT -> new Lucene104ScalarQuantizedVectorsFormat(ScalarEncoding.SINGLE_BIT_QUERY_NIBBLE);
-                  case HNSW ->
-                          new Lucene104HnswScalarQuantizedVectorsFormat(ScalarEncoding.SINGLE_BIT_QUERY_NIBBLE, maxConn, beamWidth, numMergeWorker, exec);
-              };
-              case 2 -> switch (indexType) {
-                  case FLAT -> new Lucene104ScalarQuantizedVectorsFormat(ScalarEncoding.DIBIT_QUERY_NIBBLE);
-                  case HNSW ->
-                          new Lucene104HnswScalarQuantizedVectorsFormat(ScalarEncoding.DIBIT_QUERY_NIBBLE, maxConn, beamWidth, numMergeWorker, exec);
-              };
-              case 4 -> switch (indexType) {
-                  case FLAT -> new Lucene104ScalarQuantizedVectorsFormat(ScalarEncoding.PACKED_NIBBLE);
-                  case HNSW ->
-                          new Lucene104HnswScalarQuantizedVectorsFormat(ScalarEncoding.PACKED_NIBBLE, maxConn, beamWidth, numMergeWorker, exec);
-              };
-              case 7 -> switch (indexType) {
-                  case FLAT -> new Lucene104ScalarQuantizedVectorsFormat(ScalarEncoding.SEVEN_BIT);
-                  case HNSW ->
-                          new Lucene104HnswScalarQuantizedVectorsFormat(ScalarEncoding.SEVEN_BIT, maxConn, beamWidth, numMergeWorker, exec);
-              };
-              case 8 -> switch (indexType) {
-                  case FLAT -> new Lucene104ScalarQuantizedVectorsFormat(ScalarEncoding.UNSIGNED_BYTE);
-                  case HNSW ->
-                          new Lucene104HnswScalarQuantizedVectorsFormat(ScalarEncoding.UNSIGNED_BYTE, maxConn, beamWidth, numMergeWorker, exec);
-              };
-              default -> throw new IllegalArgumentException("Unsupported quantizeBits: " + quantizeBits);
+          ScalarEncoding scalarEncoding = ScalarEncoding.fromNumBits(quantizeBits);
+          knnVectorsFormat = switch (indexType) {
+            case FLAT -> new Lucene104ScalarQuantizedVectorsFormat(scalarEncoding);
+            case HNSW -> new Lucene104HnswScalarQuantizedVectorsFormat(scalarEncoding, maxConn, beamWidth, numMergeWorker, exec);
           };
       } else {
           knnVectorsFormat = new Lucene99HnswVectorsFormat(maxConn, beamWidth, numMergeWorker, exec);
